@@ -2,6 +2,7 @@ package fermiumbooter;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -44,26 +45,24 @@ public class FermiumPlugin implements IFMLLoadingPlugin, zone.rong.mixinbooter.I
 	@Override
     public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (FermiumRegistryAPI.getRejectMixins().contains(mixinConfig)) {
-			LOGGER.warn("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
+			LOGGER.debug("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
 			return false;
 		} else {
-			List<Supplier<Boolean>> list = FermiumRegistryAPI.getEarlyMixins().get(mixinConfig);
-			if (list != null) {
-				Boolean enabled = null;
-				for(Supplier<Boolean> supplier : list) {
-					Boolean supplied = supplier.get();
-					if (supplied == Boolean.TRUE) {
-						LOGGER.info("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
-						return true;
-					}
-					else if (supplied == null) LOGGER.warn("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
-					else enabled = Boolean.FALSE;
-				}
-				if(enabled == null) {
-					LOGGER.warn("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
-				}
-				return false;
-			} else return true;
-		}
+			Collection<Supplier<Boolean>> list = FermiumRegistryAPI.getEarlyMixins().get(mixinConfig);
+            Boolean enabled = null;
+            for(Supplier<Boolean> supplier : list) {
+                Boolean supplied = supplier.get();
+                if (supplied == Boolean.TRUE) {
+                    LOGGER.debug("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
+                    return true;
+                }
+                else if (supplied == null) LOGGER.debug("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
+                else enabled = Boolean.FALSE;
+            }
+            if(enabled == null) {
+                LOGGER.debug("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
+            }
+            return false;
+        }
     }
 }

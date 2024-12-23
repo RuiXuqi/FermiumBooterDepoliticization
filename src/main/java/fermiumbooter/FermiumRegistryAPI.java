@@ -1,11 +1,10 @@
 package fermiumbooter;
 
-import org.apache.logging.log4j.LogManager;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -17,14 +16,15 @@ import java.util.function.Supplier;
 public abstract class FermiumRegistryAPI {
 
     @Deprecated
-    private static final Logger LOGGER = LogManager.getLogger("FermiumRegistryAPI");
+    private static final Logger LOGGER = FermiumPlugin.LOGGER;
 
+    // WTF? Why do not BooleanSupplier ?
     @Deprecated
-    private static HashMap<String, List<Supplier<Boolean>>> earlyMixins = new HashMap<>();
+    private static Multimap<String, Supplier<Boolean>> earlyMixins = HashMultimap.create();
     @Deprecated
-    private static HashMap<String, List<Supplier<Boolean>>> lateMixins = new HashMap<>();
+    private static Multimap<String, Supplier<Boolean>> lateMixins = HashMultimap.create();
     @Deprecated
-    private static List<String> rejectMixins = new ArrayList<>();
+    private static Set<String> rejectMixins = new HashSet<>();
 
     /**
      * Register multiple mixin config resources at once to be applied
@@ -69,24 +69,23 @@ public abstract class FermiumRegistryAPI {
      */
     @Deprecated
     public static void enqueueMixin(boolean late, String configuration, Supplier<Boolean> supplier) {
+        checkState();
         if(configuration == null || configuration.trim().isEmpty()) {
-            LOGGER.warn("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
+            LOGGER.debug("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
             return;
         }
         if(supplier == null) {//Do not evaluate supplier.get() itself for null now
-            LOGGER.warn("FermiumRegistryAPI supplied null supplier for configuration \"" + configuration + "\" during mixin enqueue, ignoring.");
+            LOGGER.debug("FermiumRegistryAPI supplied null supplier for configuration \"" + configuration + "\" during mixin enqueue, ignoring.");
             return;
         }
         //Process rejects prior to application
         if(late) {
-            LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
-            lateMixins.computeIfAbsent(configuration, k -> new ArrayList<>());
-            lateMixins.get(configuration).add(supplier);
+            LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
+            lateMixins.put(configuration, supplier);
         }
         else {
-            LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
-            earlyMixins.computeIfAbsent(configuration, k -> new ArrayList<>());
-            earlyMixins.get(configuration).add(supplier);
+            LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
+            earlyMixins.put(configuration, supplier);
         }
     }
 
@@ -97,11 +96,12 @@ public abstract class FermiumRegistryAPI {
      */
     @Deprecated
     public static void removeMixin(String configuration) {
+        checkState();
         if(configuration == null || configuration.trim().isEmpty()) {
-            LOGGER.warn("FermiumRegistryAPI supplied null or empty configuration name for mixin removal, ignoring.");
+            LOGGER.debug("FermiumRegistryAPI supplied null or empty configuration name for mixin removal, ignoring.");
             return;
         }
-        LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
+        LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
         rejectMixins.add(configuration);
     }
 
@@ -109,7 +109,7 @@ public abstract class FermiumRegistryAPI {
      * Internal Use; Do Not Use
      */
     @Deprecated
-    public static HashMap<String, List<Supplier<Boolean>>> getEarlyMixins() {
+    public static Multimap<String, Supplier<Boolean>> getEarlyMixins() {
         return earlyMixins;
     }
 
@@ -117,7 +117,7 @@ public abstract class FermiumRegistryAPI {
      * Internal Use; Do Not Use
      */
     @Deprecated
-    public static HashMap<String, List<Supplier<Boolean>>> getLateMixins() {
+    public static Multimap<String, Supplier<Boolean>> getLateMixins() {
         return lateMixins;
     }
 
@@ -125,8 +125,14 @@ public abstract class FermiumRegistryAPI {
      * Internal Use; Do Not Use
      */
     @Deprecated
-    public static List<String> getRejectMixins() {
+    public static Set<String> getRejectMixins() {
         return rejectMixins;
+    }
+
+    private static void checkState() {
+        if (earlyMixins == null) throw new IllegalStateException("Mixins should be registered before ModConstruction");
+        if (lateMixins == null) throw new IllegalStateException("Mixins should be registered before ModConstruction");
+        if (rejectMixins == null) throw new IllegalStateException("Mixins should be registered before ModConstruction");
     }
 
     /**

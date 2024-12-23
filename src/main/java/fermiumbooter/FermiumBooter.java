@@ -1,16 +1,11 @@
 package fermiumbooter;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
+import com.google.common.eventbus.Subscribe;
 import net.minecraftforge.fml.common.ModMetadata;
-
-import java.util.function.Supplier;
+import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 
 @Deprecated
 public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContainer implements zone.rong.mixinbooter.ILateMixinLoader
@@ -18,7 +13,7 @@ public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContain
     public static final String MODID = "fermiumbooter";
     public static final String VERSION = "1.1.1";
     public static final String NAME = "FermiumBooterDepoliticization";
-	
+
 	public FermiumBooter() {
 		super(new ModMetadata());
         ModMetadata metadata = this.getMetadata();
@@ -35,14 +30,21 @@ public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContain
 
 	@Override
     public boolean registerBus(com.google.common.eventbus.EventBus bus, net.minecraftforge.fml.common.LoadController controller) {  
-        return true;
+        bus.register(this);
+		return true;
     }
+
+	@Subscribe
+	@SuppressWarnings("unused")
+	public void onConstructed(FMLConstructionEvent event) {
+		FermiumRegistryAPI.clear();
+	}
 
     @Override
     public Set<net.minecraftforge.fml.common.versioning.ArtifactVersion> getRequirements() {
         return Collections.singleton(new net.minecraftforge.fml.common.versioning.DefaultArtifactVersion("mixinbooter"));
     }
-    
+
     @Override
     public List<String> getMixinConfigs(){
 		return Arrays.asList(FermiumRegistryAPI.getLateMixins().keySet().toArray(new String[0]));
@@ -51,26 +53,24 @@ public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContain
 	@Override
     public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (FermiumRegistryAPI.getRejectMixins().contains(mixinConfig)) {
-			FermiumPlugin.LOGGER.warn("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
+			FermiumPlugin.LOGGER.debug("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
 			return false;
 		} else {
-			List<Supplier<Boolean>> list = FermiumRegistryAPI.getLateMixins().get(mixinConfig);
-			if (list != null) {
-				Boolean enabled = null;
-				for(Supplier<Boolean> supplier : list) {
-					Boolean supplied = supplier.get();
-					if (supplied == Boolean.TRUE) {
-						FermiumPlugin.LOGGER.info("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
-						return true;
-					}
-					else if (supplied == null) FermiumPlugin.LOGGER.warn("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
-					else enabled = Boolean.FALSE;
-				}
-				if(enabled == null) {
-					FermiumPlugin.LOGGER.warn("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
-				}
-				return false;
-			} else return true;
-		}
+			Collection<Supplier<Boolean>> list = FermiumRegistryAPI.getLateMixins().get(mixinConfig);
+            Boolean enabled = null;
+            for(Supplier<Boolean> supplier : list) {
+                Boolean supplied = supplier.get();
+                if (supplied == Boolean.TRUE) {
+                    FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
+                    return true;
+                }
+                else if (supplied == null) FermiumPlugin.LOGGER.debug("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
+                else enabled = Boolean.FALSE;
+            }
+            if(enabled == null) {
+                FermiumPlugin.LOGGER.debug("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
+            }
+            return false;
+        }
     }
 }
