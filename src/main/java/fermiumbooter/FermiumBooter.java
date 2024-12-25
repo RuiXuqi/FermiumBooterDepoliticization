@@ -25,7 +25,7 @@ public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContain
             "       MixinBooter - it is a true mixin lib with tech.\n";
         metadata.description = "Defenders against destroying communities";
         metadata.url = "https://github.com/Ecdcaeb/FermiumBooterDepoliticization";
-        metadata.logoFile ="assets/icon.png";
+        metadata.logoFile ="assets/fermiumbooter/icon.png";
 	}
 
 	@Override
