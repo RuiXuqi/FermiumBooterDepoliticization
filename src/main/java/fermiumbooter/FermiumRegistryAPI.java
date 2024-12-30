@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 /**
  * Enqueue mixins to be applied or rejected from your IFMLLoadingPlugin class init
@@ -20,9 +21,9 @@ public abstract class FermiumRegistryAPI {
 
     // WTF? Why do not BooleanSupplier ?
     @Deprecated
-    private static Multimap<String, Supplier<Boolean>> earlyMixins = HashMultimap.create();
+    private static Multimap<String, BooleanSupplier> earlyMixins = HashMultimap.create();
     @Deprecated
-    private static Multimap<String, Supplier<Boolean>> lateMixins = HashMultimap.create();
+    private static Multimap<String, BooleanSupplier> lateMixins = HashMultimap.create();
     @Deprecated
     private static Set<String> rejectMixins = new HashSet<>();
 
@@ -45,7 +46,7 @@ public abstract class FermiumRegistryAPI {
      */
     @Deprecated
     public static void enqueueMixin(boolean late, String configuration) {
-        enqueueMixin(late, configuration, true);
+        enqueueMixin(late, configuration, () -> true);
     }
 
     /**
@@ -68,14 +69,14 @@ public abstract class FermiumRegistryAPI {
      * @param supplier - supplier to determine whether to apply the mixin or not
      */
     @Deprecated
-    public static void enqueueMixin(boolean late, String configuration, Supplier<Boolean> supplier) {
+    public static void enqueueMixin(boolean late, String configuration, BooleanSupplier supplier) {
         checkState();
         if(configuration == null || configuration.trim().isEmpty()) {
             LOGGER.debug("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
             return;
         }
         if(supplier == null) {//Do not evaluate supplier.get() itself for null now
-            LOGGER.debug("FermiumRegistryAPI supplied null supplier for configuration \"" + configuration + "\" during mixin enqueue, ignoring.");
+            LOGGER.warn("FermiumRegistryAPI supplied null supplier for configuration \"" + configuration + "\" during mixin enqueue, ignoring.");
             return;
         }
         //Process rejects prior to application
@@ -87,6 +88,18 @@ public abstract class FermiumRegistryAPI {
             LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
             earlyMixins.put(configuration, supplier);
         }
+    }
+
+    /**
+     * Add a mixin config resource to be applied, with a supplier to toggle application to be evaluated after all like-timed configs are registered
+     * Note: If multiple suppliers are given for a single configuration, it is evaluated as OR
+     * @param late - whether to apply the mixin late or early
+     * @param configuration - mixin config resource name
+     * @param supplier - supplier to determine whether to apply the mixin or not
+     */
+    @Deprecated
+    public static void enqueueMixin(boolean late, String configuration, Supplier<Boolean> supplier) {
+        enqueueMixin(late, configuration, () -> supplier.get());
     }
 
     /**
@@ -109,7 +122,7 @@ public abstract class FermiumRegistryAPI {
      * Internal Use; Do Not Use
      */
     @Deprecated
-    public static Multimap<String, Supplier<Boolean>> getEarlyMixins() {
+    public static Multimap<String, BooleanSupplier> getEarlyMixins() {
         return earlyMixins;
     }
 
@@ -117,7 +130,7 @@ public abstract class FermiumRegistryAPI {
      * Internal Use; Do Not Use
      */
     @Deprecated
-    public static Multimap<String, Supplier<Boolean>> getLateMixins() {
+    public static Multimap<String, BooleanSupplier> getLateMixins() {
         return lateMixins;
     }
 

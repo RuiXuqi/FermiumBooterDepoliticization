@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
@@ -45,23 +45,16 @@ public class FermiumPlugin implements IFMLLoadingPlugin, zone.rong.mixinbooter.I
 	@Override
     public boolean shouldMixinConfigQueue(String mixinConfig) {
         if (FermiumRegistryAPI.getRejectMixins().contains(mixinConfig)) {
-			LOGGER.debug("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
+			FermiumPlugin.LOGGER.debug("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
 			return false;
 		} else {
-			Collection<Supplier<Boolean>> list = FermiumRegistryAPI.getEarlyMixins().get(mixinConfig);
-            Boolean enabled = null;
-            for(Supplier<Boolean> supplier : list) {
-                Boolean supplied = supplier.get();
-                if (supplied == Boolean.TRUE) {
-                    LOGGER.debug("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
+            for(BooleanSupplier supplier : FermiumRegistryAPI.getEarlyMixins().get(mixinConfig)) {
+                if (supplier.getAsBoolean()) {
+                    FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
                     return true;
                 }
-                else if (supplied == null) LOGGER.debug("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
-                else enabled = Boolean.FALSE;
             }
-            if(enabled == null) {
-                LOGGER.debug("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
-            }
+            FermiumPlugin.LOGGER.debug("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
             return false;
         }
     }
