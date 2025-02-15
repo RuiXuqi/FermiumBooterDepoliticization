@@ -19,8 +19,14 @@ public abstract class FermiumRegistryAPI {
 
   @Deprecated private static Multimap<String, BooleanSupplier> earlyMixins = HashMultimap.create();
   @Deprecated private static Multimap<String, BooleanSupplier> lateMixins = HashMultimap.create();
-  @Deprecated private static Set<String> rejectMixins = new HashSet<>();
+  @Deprecated private static Collection<String> rejectMixins;
 
+  static {
+    if (GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS) == null) {
+      GlobalProperties.put(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS, new HashSet<>());
+    }
+    rejectMixins = (Collection<String>) GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS);
+  }
   /**
    * Register multiple mixin config resources at once to be applied
    * @param late - whether to apply the mixin late or early
@@ -108,7 +114,7 @@ public abstract class FermiumRegistryAPI {
       return;
     }
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
-    GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS).add(configuration);
+    rejectMixins.add(configuration);
   }
 
   /**
@@ -147,4 +153,5 @@ public abstract class FermiumRegistryAPI {
     lateMixins = null;
     rejectMixins = null;
   }
+  
 }

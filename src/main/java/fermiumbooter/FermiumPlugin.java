@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 @IFMLLoadingPlugin.SortingIndex(990)
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
+  
   public static final Logger LOGGER =
       LogManager.getLogger("FermiumBooterDepoliticization");
 
