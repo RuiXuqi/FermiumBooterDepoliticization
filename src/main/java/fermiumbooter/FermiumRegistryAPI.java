@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.launch.GlobalProperties;
 
 /**
  * Enqueue mixins to be applied or rejected from your IFMLLoadingPlugin class init
@@ -91,7 +92,7 @@ public abstract class FermiumRegistryAPI {
    */
   @Deprecated
   public static void enqueueMixin(boolean late, String configuration, Supplier<Boolean> supplier) {
-    enqueueMixin(late, configuration, () -> supplier.get());
+    enqueueMixin(late, configuration, () -> supplier.get().booleanValue());
   }
 
   /**
@@ -107,7 +108,7 @@ public abstract class FermiumRegistryAPI {
       return;
     }
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
-    rejectMixins.add(configuration);
+    GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS).add(configuration);
   }
 
   /**
@@ -126,13 +127,6 @@ public abstract class FermiumRegistryAPI {
     return lateMixins;
   }
 
-  /**
-   * Internal Use; Do Not Use
-   */
-  @Deprecated
-  public static Set<String> getRejectMixins() {
-    return rejectMixins;
-  }
 
   private static void checkState() {
     if (earlyMixins == null)

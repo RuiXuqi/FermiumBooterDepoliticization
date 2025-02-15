@@ -58,11 +58,7 @@ public class FermiumPlugin
 
   @Override
   public boolean shouldMixinConfigQueue(String mixinConfig) {
-    if (FermiumRegistryAPI.getRejectMixins().contains(mixinConfig)) {
-      FermiumPlugin.LOGGER.debug("FermiumBooter received removal of \""
-          + mixinConfig + "\" for early mixin application, rejecting.");
-      return false;
-    } else {
+    {
       for (BooleanSupplier supplier :
           FermiumRegistryAPI.getEarlyMixins().get(mixinConfig)) {
         if (supplier.getAsBoolean()) {
