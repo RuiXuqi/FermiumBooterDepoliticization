@@ -161,6 +161,7 @@ public abstract class FermiumRegistryAPI {
 				searchForMixinConfig(f.getType(), f.get(instance));
 			} else if (f.isAnnotationPresent(MixinConfig.EarlyMixin.class)) {
         MixinConfig.EarlyMixin earlyMixin = f.getAnnotation(MixinConfig.EarlyMixin.class);
+        enqueueMixin(false, earlyMixin.name());
         {
           if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
             for (MixinConfig.CompatHandling compat : f.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
@@ -180,6 +181,7 @@ public abstract class FermiumRegistryAPI {
         } 
       } else if (f.isAnnotationPresent(MixinConfig.LateMixin.class)) {
         MixinConfig.LateMixin earlyMixin = f.getAnnotation(MixinConfig.LateMixin.class);
+        enqueueMixin(true, earlyMixin.name());
         {
           if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
             for (MixinConfig.CompatHandling compat : f.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
