@@ -16,7 +16,7 @@ import fermiumbooter.annotations.MixinConfig;
 @Deprecated
 public abstract class FermiumRegistryAPI {
 
-  // static mod detect ? shit design
+  @Deprecated static Set<String> speculatedModList = null;
   @Deprecated static zone.rong.mixinbooter.Context activeContext = null;
 
   @Deprecated private static final Logger LOGGER = FermiumPlugin.LOGGER;
@@ -124,7 +124,7 @@ public abstract class FermiumRegistryAPI {
   
   // why static instead of dynamic
   public static boolean isModPresent(String modid) {
-    return activeContext.isModPresent(modid);
+    return activeContext == null ? speculatedModList.contains(modid) : activeContext.isModPresent(modid);
   }
 
   // crazy config handler, fermuim is too crazy.
