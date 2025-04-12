@@ -1,2 +1,2 @@
-# FermiumBooter
- Simplistic mixin mod utility to apply toggle-able mixins to both early and late loaded classes
+A layer change FermiumBooter to MixinBooter, without codes from FermiumBooter.
+There is nothing technologically advanced about FermiumBooter but incredibly inefficient methods.

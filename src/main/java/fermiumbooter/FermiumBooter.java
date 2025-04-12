@@ -6,12 +6,15 @@ import java.util.function.BooleanSupplier;
 import net.minecraftforge.fml.common.ModMetadata;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 
+/**
+ * Layer without codes from Fermium
+*/
 @Deprecated
 public class FermiumBooter
     extends net.minecraftforge.fml.common.DummyModContainer
     implements zone.rong.mixinbooter.ILateMixinLoader {
   public static final String MODID = "fermiumbooter";
-  public static final String VERSION = "1.1.1";
+  public static final String VERSION = "1.2.1";
   public static final String NAME = "FermiumBooterDepoliticization";
 
   public FermiumBooter() {
@@ -56,19 +59,20 @@ public class FermiumBooter
   }
 
   @Override
-  public boolean shouldMixinConfigQueue(String mixinConfig) {
+  public boolean shouldMixinConfigQueue(zone.rong.mixinbooter.Context mixinConfig) {
+    FermiumRegistryAPI.activeContext = mixinConfig;
     {
       for (BooleanSupplier supplier :
-          FermiumRegistryAPI.getLateMixins().get(mixinConfig)) {
+          FermiumRegistryAPI.getLateMixins().get(mixinConfig.mixinConfig())) {
         if (supplier.getAsBoolean()) {
-          FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig
+          FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig.mixinConfig()
               + "\" for early mixin application.");
           return true;
         }
       }
       FermiumPlugin.LOGGER.debug(
           "FermiumBooter received null value for suppliers from \""
-          + mixinConfig + "\" for early mixin application, ignoring.");
+          + mixinConfig.mixinConfig() + "\" for early mixin application, ignoring.");
       return false;
     }
   }

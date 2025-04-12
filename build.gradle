@@ -41,6 +41,7 @@ dependencies {
     implementation ('zone.rong:mixinbooter:10.5') {
         transitive = false
     }
+    implementation 'com.cleanroommc:configanytime:2.0'
     annotationProcessor ('zone.rong:mixinbooter:10.5') {
         transitive = false
     }

@@ -3,18 +3,22 @@ package fermiumbooter;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.*;
+import java.lang.reflect.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.launch.GlobalProperties;
+import fermiumbooter.annotations.MixinConfig;
 
 /**
- * Enqueue mixins to be applied or rejected from your IFMLLoadingPlugin class init
- * Includes options for disabling the mixin from a Supplier, and loading it either early or late
- * Configuration name is the name of the json pointing to your mixin, such as "mixins.fermiumbooter.init.json"
- */
+ * Layer without codes from Fermium
+*/
 @Deprecated
 public abstract class FermiumRegistryAPI {
+
+  // static mod detect ? shit design
+  @Deprecated static zone.rong.mixinbooter.Context activeContext = null;
+
   @Deprecated private static final Logger LOGGER = FermiumPlugin.LOGGER;
 
   @Deprecated private static Multimap<String, BooleanSupplier> earlyMixins = HashMultimap.create();
@@ -58,7 +62,8 @@ public abstract class FermiumRegistryAPI {
    */
   @Deprecated
   public static void enqueueMixin(boolean late, String configuration, boolean enabled) {
-    enqueueMixin(late, configuration, () -> enabled);
+    if (enabled) enqueueMixin(late, configuration, () -> true);
+    else enqueueMixin(late, configuration, () -> false);
   }
 
   /**
@@ -116,23 +121,17 @@ public abstract class FermiumRegistryAPI {
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
     rejectMixins.add(configuration);
   }
-
-  /**
-   * Internal Use; Do Not Use
-   */
-  @Deprecated
-  public static Multimap<String, BooleanSupplier> getEarlyMixins() {
-    return earlyMixins;
+  
+  // why static instead of dynamic
+  public static boolean isModPresent(String modid) {
+    return activeContext.isModPresent(modid);
   }
 
-  /**
-   * Internal Use; Do Not Use
-   */
-  @Deprecated
-  public static Multimap<String, BooleanSupplier> getLateMixins() {
-    return lateMixins;
+  // crazy config handler, fermuim is too crazy.
+  public static <T> void registerAnnotatedMixinConfig(Class<T> clazz, T instance) {
+    com.cleanroommc.configanytime.ConfigAnytime.register(clazz); // wtf a instance here?
+    searchForMixinConfig(clazz, instance);
   }
-
 
   private static void checkState() {
     if (earlyMixins == null)
@@ -143,11 +142,70 @@ public abstract class FermiumRegistryAPI {
       throw new IllegalStateException("Mixins should be registered before ModConstruction");
   }
 
-  /**
-   * Internal Use; Do Not Use
-   */
+  // internal use methods should be package private.
+
   @Deprecated
-  public static void clear() {
+  static Multimap<String, BooleanSupplier> getEarlyMixins() {
+    return earlyMixins;
+  }
+
+  @Deprecated
+  static Multimap<String, BooleanSupplier> getLateMixins() {
+    return lateMixins;
+  }
+
+  static void searchForMixinConfig(Class<?> clazz, Object instance) {
+    try {
+    for (Field f : clazz.getDeclaredFields()) {
+      if(f.isAnnotationPresent(MixinConfig.SubInstance.class)) {
+				searchForMixinConfig(f.getType(), f.get(instance));
+			} else if (f.isAnnotationPresent(MixinConfig.EarlyMixin.class)) {
+        MixinConfig.EarlyMixin earlyMixin = f.getAnnotation(MixinConfig.EarlyMixin.class);
+        {
+          if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
+            for (MixinConfig.CompatHandling compat : f.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
+              if (compat.desired() != isModPresent(compat.modid())) {
+                LOGGER.error(
+                  "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                  f.getName(), earlyMixin.name(),
+                  compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                  compat.desired() ? "without" : "with", 
+                  compat.modid(), compat.reason());
+                if (compat.disableMixin()) {
+                  removeMixin(earlyMixin.name());
+                }
+              }
+            }
+          }
+        } 
+      } else if (f.isAnnotationPresent(MixinConfig.LateMixin.class)) {
+        MixinConfig.LateMixin earlyMixin = f.getAnnotation(MixinConfig.LateMixin.class);
+        {
+          if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
+            for (MixinConfig.CompatHandling compat : f.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
+              if (compat.desired() != isModPresent(compat.modid())) {
+                LOGGER.error(
+                  "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                  f.getName(), earlyMixin.name(),
+                  compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                  compat.desired() ? "without" : "with", 
+                  compat.modid(), compat.reason());
+                if (compat.disableMixin()) {
+                  removeMixin(earlyMixin.name());
+                }
+              }
+            }
+          }
+        } 
+      }
+    }
+    } catch (Throwable t) {
+      LOGGER.error("FermiumBooterDepoliticization failed to parse provided config class " + clazz.getName(), t);
+    }
+  }
+
+  @Deprecated
+  static void clear() {
     // :)
     earlyMixins = null;
     lateMixins = null;

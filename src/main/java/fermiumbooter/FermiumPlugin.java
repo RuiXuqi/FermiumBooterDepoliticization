@@ -11,14 +11,19 @@ import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/**
+ * Layer without codes from Fermium
+*/
 @Deprecated
 @IFMLLoadingPlugin.Name("FermiumBooter")
 @IFMLLoadingPlugin.SortingIndex(990)
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
+  static {
+    com.cleanroommc.configanytime.ConfigAnytime.register(fermiumbooter.internal.Config.class);
+  }
   
-  public static final Logger LOGGER =
-      LogManager.getLogger("FermiumBooterDepoliticization");
+  public static final Logger LOGGER = LogManager.getLogger("FermiumBooterDepoliticization");
 
   public static File source = null;
 
@@ -58,19 +63,20 @@ public class FermiumPlugin
   }
 
   @Override
-  public boolean shouldMixinConfigQueue(String mixinConfig) {
+  public boolean shouldMixinConfigQueue(zone.rong.mixinbooter.Context mixinConfig) {
+    FermiumRegistryAPI.activeContext = mixinConfig;
     {
       for (BooleanSupplier supplier :
-          FermiumRegistryAPI.getEarlyMixins().get(mixinConfig)) {
+          FermiumRegistryAPI.getEarlyMixins().get(mixinConfig.mixinConfig())) {
         if (supplier.getAsBoolean()) {
-          FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig
+          FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig.mixinConfig()
               + "\" for early mixin application.");
           return true;
         }
       }
       FermiumPlugin.LOGGER.debug(
           "FermiumBooter received null value for suppliers from \""
-          + mixinConfig + "\" for early mixin application, ignoring.");
+          + mixinConfig.mixinConfig() + "\" for early mixin application, ignoring.");
       return false;
     }
   }
