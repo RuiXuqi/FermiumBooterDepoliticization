@@ -14,7 +14,7 @@ public class FermiumBooter
     extends net.minecraftforge.fml.common.DummyModContainer
     implements zone.rong.mixinbooter.ILateMixinLoader {
   public static final String MODID = "fermiumbooter";
-  public static final String VERSION = "1.2.2";
+  public static final String VERSION = "1.2.3";
   public static final String NAME = "FermiumBooterDepoliticization";
 
   public FermiumBooter() {

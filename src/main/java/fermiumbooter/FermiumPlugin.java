@@ -19,17 +19,6 @@ public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
   static {
     com.cleanroommc.configanytime.ConfigAnytime.register(fermiumbooter.internal.Config.class);
-    try {
-      if (new zone.rong.mixinbooter.Context(null, null).modLoader() == zone.rong.mixinbooter.Context.ModLoader.CLEANROOM) {
-        FermiumRegistryAPI.speculatedModList = (Set<String>) Class.forName("net.minecraftforge.fml.relauncher.MixinBooterPlugin").getDeclaredMethod("speculatedModList").invoke(null);
-      } else {
-        Field f = Class.forName("zone.rong.mixinbooter.MixinBooterPlugin").getDeclaredField("presentMods");
-        f.setAccessible(true);
-        FermiumRegistryAPI.speculatedModList = (Set<String>) f.get(null);
-      }
-    } catch (Throwable e) {
-      throw new RuntimeException("Could not setup FermiumBooterDepoliticization.", e);
-    }
   }
   
   public static final Logger LOGGER = LogManager.getLogger("FermiumBooterDepoliticization");
