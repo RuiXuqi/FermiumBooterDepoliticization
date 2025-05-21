@@ -153,7 +153,7 @@ public abstract class FermiumRegistryAPI {
     return lateMixins;
   }
 
-  static void searchForMixinConfig(Class<?> clazz, Object instance) {
+  static void searchForMixinConfig(final Class<?> clazz, final Object instance) {
     try {
     for (Field f : clazz.getDeclaredFields()) {
       if(f.isAnnotationPresent(MixinConfig.SubInstance.class)) {
@@ -178,7 +178,12 @@ public abstract class FermiumRegistryAPI {
               }
             }
           }
-          return true;
+          try {
+            return field.getBoolean(instance);
+          } catch (Throwable t) {
+            LOGGER.error("FermiumBooterDepoliticization failed to parse provided config class " + clazz.getName(), t);
+            return false;
+          }
         });
       } else if (f.isAnnotationPresent(MixinConfig.LateMixin.class)) {
         final MixinConfig.LateMixin earlyMixin = f.getAnnotation(MixinConfig.LateMixin.class);
@@ -200,7 +205,12 @@ public abstract class FermiumRegistryAPI {
               }
             }
           }
-          return true;
+          try {
+            return field.getBoolean(instance);
+          } catch (Throwable t) {
+            LOGGER.error("FermiumBooterDepoliticization failed to parse provided config class " + clazz.getName(), t);
+            return false;
+          }
         });
       }
     }
