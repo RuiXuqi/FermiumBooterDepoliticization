@@ -3,7 +3,10 @@ package fermiumbooter;
 import java.io.File;
 import java.util.*;
 import java.util.function.BooleanSupplier;
-import java.lang.reflect.*;
+
+import fermiumbooter.internal.DiscoveryHandler;
+import fermiumbooter.internal.FBConfig;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
@@ -18,7 +21,7 @@ import org.apache.logging.log4j.Logger;
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
   static {
-    com.cleanroommc.configanytime.ConfigAnytime.register(fermiumbooter.internal.Config.class);
+    com.cleanroommc.configanytime.ConfigAnytime.register(FBConfig.class);
   }
   
   public static final Logger LOGGER = LogManager.getLogger("FermiumBooterDepoliticization");
@@ -46,6 +49,22 @@ public class FermiumPlugin
     source = (File) data.get("coremodLocation");
     if (source != null)
       makeFMLCorePluginContainsFMLMod(source);
+    DiscoveryHandler discoveryHandler = new DiscoveryHandler();
+    discoveryHandler.build();
+    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("net/minecraftforge/fml/common/Mod")) {
+      if (asmData.values != null && asmData.values.containsKey("modid")) {
+        FermiumRegistryAPI.mods.add((String) asmData.values.get("modid"));
+      }
+    }
+    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("fermiumbooter/annotations/MixinConfig")) {
+      if (asmData.values != null && asmData.values.containsKey("name")) {
+        try {
+          FermiumRegistryAPI.registerAnnotatedMixinConfig(Class.forName(asmData.className.replace('/', '.'), true, Launch.classLoader), null);
+        } catch (Throwable t) {
+          LOGGER.error(t);
+        }
+      }
+    }
   }
 
   public static void makeFMLCorePluginContainsFMLMod(File file) {

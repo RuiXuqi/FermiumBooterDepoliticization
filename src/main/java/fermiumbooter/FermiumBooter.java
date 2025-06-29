@@ -13,9 +13,9 @@ import net.minecraftforge.fml.common.event.FMLConstructionEvent;
 public class FermiumBooter
     extends net.minecraftforge.fml.common.DummyModContainer
     implements zone.rong.mixinbooter.ILateMixinLoader {
-  public static final String MODID = "fermiumbooter";
-  public static final String VERSION = "1.2.4";
-  public static final String NAME = "FermiumBooterDepoliticization";
+  public static final String MODID = Tags.MOD_ID;
+  public static final String VERSION = Tags.VERSION;
+  public static final String NAME = Tags.MOD_NAME;
 
   public FermiumBooter() {
     super(new ModMetadata());

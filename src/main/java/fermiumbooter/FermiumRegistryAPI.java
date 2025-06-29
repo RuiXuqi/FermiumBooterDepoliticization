@@ -6,6 +6,10 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+
+import fermiumbooter.internal.ConfigAnytimeX;
+import fermiumbooter.internal.FBConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.launch.GlobalProperties;
 import fermiumbooter.annotations.MixinConfig;
@@ -17,6 +21,7 @@ import fermiumbooter.annotations.MixinConfig;
 public abstract class FermiumRegistryAPI {
 
   @Deprecated static zone.rong.mixinbooter.Context activeContext = null;
+  static Set<String> mods = new HashSet<>();
 
   @Deprecated private static final Logger LOGGER = FermiumPlugin.LOGGER;
 
@@ -123,12 +128,13 @@ public abstract class FermiumRegistryAPI {
   
   // why static instead of dynamic
   public static boolean isModPresent(String modid) {
-    return activeContext != null && activeContext.isModPresent(modid);
+    return (activeContext != null && activeContext.isModPresent(modid)) || mods.contains(modid);
   }
 
   // crazy config handler, fermuim is too crazy.
+  // removed at fermuim 1.3
   public static <T> void registerAnnotatedMixinConfig(Class<T> clazz, T instance) {
-    com.cleanroommc.configanytime.ConfigAnytime.register(clazz); // wtf a instance here?
+    ConfigAnytimeX.register(clazz); // wtf a instance here?
     searchForMixinConfig(clazz, instance);
   }
 
@@ -163,7 +169,7 @@ public abstract class FermiumRegistryAPI {
         final Field field = f;
         enqueueMixin(false, earlyMixin.name(), ()->
         {
-          if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
+          if(FBConfig.overrideMixinCompatibilityChecks) {
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
                 LOGGER.error(
@@ -190,7 +196,7 @@ public abstract class FermiumRegistryAPI {
         final Field field = f;
         enqueueMixin(true, earlyMixin.name(), ()->
         {
-          if(fermiumbooter.internal.Config.overrideMixinCompatibilityChecks) {
+          if(FBConfig.overrideMixinCompatibilityChecks) {
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
                 LOGGER.error(
@@ -212,6 +218,61 @@ public abstract class FermiumRegistryAPI {
             return false;
           }
         });
+      } else if (f.isAnnotationPresent(MixinConfig.MixinToggle.class)) {
+        final MixinConfig.MixinToggle mixinToggle = f.getAnnotation(MixinConfig.MixinToggle.class);
+        final Field field = f;
+        if (StringUtils.isNotEmpty(mixinToggle.earlyMixin())) {
+          enqueueMixin(false, mixinToggle.earlyMixin(), ()->
+          {
+            if(FBConfig.overrideMixinCompatibilityChecks) {
+              for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
+                if (compat.desired() != isModPresent(compat.modid())) {
+                  LOGGER.error(
+                          "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                          field.getName(), mixinToggle.earlyMixin(),
+                          compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                          compat.desired() ? "without" : "with",
+                          compat.modid(), compat.reason());
+                  if (compat.disableMixin()) {
+                    return false;
+                  }
+                }
+              }
+            }
+            try {
+              return field.getBoolean(instance);
+            } catch (Throwable t) {
+              LOGGER.error("FermiumBooterDepoliticization failed to parse provided config class " + clazz.getName(), t);
+              return mixinToggle.defaultValue();
+            }
+          });
+        }
+        if (StringUtils.isNotEmpty(mixinToggle.lateMixin())) {
+          enqueueMixin(true, mixinToggle.lateMixin(), ()->
+          {
+            if(FBConfig.overrideMixinCompatibilityChecks) {
+              for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
+                if (compat.desired() != isModPresent(compat.modid())) {
+                  LOGGER.error(
+                          "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                          field.getName(), mixinToggle.lateMixin(),
+                          compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                          compat.desired() ? "without" : "with",
+                          compat.modid(), compat.reason());
+                  if (compat.disableMixin()) {
+                    return false;
+                  }
+                }
+              }
+            }
+            try {
+              return field.getBoolean(instance);
+            } catch (Throwable t) {
+              LOGGER.error("FermiumBooterDepoliticization failed to parse provided config class " + clazz.getName(), t);
+              return mixinToggle.defaultValue();
+            }
+          });
+        }
       }
     }
     } catch (Throwable t) {
@@ -226,6 +287,7 @@ public abstract class FermiumRegistryAPI {
     lateMixins = null;
     rejectMixins = null;
     activeContext = null;
+    mods = null;
   }
   
 }

@@ -7,7 +7,10 @@ import java.lang.annotation.*;
 */
 @Deprecated
 @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
 public @interface MixinConfig {
+
+	String name();
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
@@ -23,6 +26,14 @@ public @interface MixinConfig {
 	@Target(ElementType.FIELD)
 	@interface LateMixin {
 		String name();
+	}
+
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(ElementType.FIELD)
+	@interface MixinToggle {
+		String earlyMixin() default "";
+		String lateMixin() default "";
+		boolean defaultValue();
 	}
 	
 	@Retention(RetentionPolicy.RUNTIME)
