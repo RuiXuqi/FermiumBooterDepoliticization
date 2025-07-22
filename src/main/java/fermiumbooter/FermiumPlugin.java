@@ -67,7 +67,7 @@ public class FermiumPlugin
           FermiumRegistryAPI.mods.add((String) asmData.values.get("modid"));
         }
         if (asmData.values.containsKey("dependencies")) {
-          if (((String)asmData.values.containsKey("dependencies")).contains(":fermiumbooter")) {
+          if (((String)asmData.values.get("dependencies")).contains(":fermiumbooter")) {
             if (asmData.values.containsKey("modid")) {
               String modId = (String)asmData.values.get("modid");
               usingFermiumBooterMods.add(modId);
