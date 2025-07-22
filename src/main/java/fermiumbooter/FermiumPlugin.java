@@ -71,7 +71,7 @@ public class FermiumPlugin
             if (asmData.values.containsKey("modid")) {
               String modId = (String)asmData.values.get("modid");
               usingFermiumBooterMods.add(modId);
-              UpdateHelper.onModUsingFermiumbooter(modId)
+              UpdateHelper.onModUsingFermiumbooter(modId);
             }
           }
         }
