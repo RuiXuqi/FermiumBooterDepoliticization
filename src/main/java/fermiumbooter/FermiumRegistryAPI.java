@@ -6,8 +6,9 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import fermiumbooter.internal.UpdateHelper;
 
-import fermiumbooter.internal.ConfigAnytimeX;
+import com.cleanroommc.configanytime.ConfigAnytime;
 import fermiumbooter.internal.FBConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
@@ -134,7 +135,8 @@ public abstract class FermiumRegistryAPI {
   // crazy config handler, fermuim is too crazy.
   // removed at fermuim 1.3
   public static <T> void registerAnnotatedMixinConfig(Class<T> clazz, T instance) {
-    ConfigAnytimeX.register(clazz); // wtf a instance here?
+    UpdateHelper.onModRegisterV1_2Config(clazz.getName());
+    ConfigAnytime.register(clazz); // wtf a instance here?
     searchForMixinConfig(clazz, instance);
   }
 
