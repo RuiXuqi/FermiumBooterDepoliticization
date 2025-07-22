@@ -83,7 +83,7 @@ public class FermiumPlugin
         try {
           FermiumRegistryAPI.registerAnnotatedMixinConfig(Class.forName(asmData.className.replace('/', '.'), true, Launch.classLoader), null);
         } catch (Throwable t) {
-          LOGGER.error("Error at Register MixinConfig", t);
+          LOGGER.error("Error at Register MixinConfig " + asmData.className.replace('/', '.') , t);
         }
       }
     }
