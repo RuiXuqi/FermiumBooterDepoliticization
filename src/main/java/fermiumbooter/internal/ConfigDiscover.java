@@ -29,7 +29,6 @@ public class ConfigDiscover {
             if (asmData.values != null && asmData.values.containsKey("name")) {
                 String name = (String) asmData.values.get("name");
                 if (!configMap.containsKey(name)) {
-                    configMap.computeIfAbsent(name, (k)->new HashMap<>());
                     try (Stream<String> lines = Files.lines(new File(Launch.minecraftHome, "config/" + name + ".cfg").toPath())) {
                         for (String line : lines.map(String::trim).filter((s) -> s.startsWith("B:")).collect(Collectors.toList())) {
                             String kname = line.substring(2, line.lastIndexOf('='));

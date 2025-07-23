@@ -91,10 +91,10 @@ public abstract class FermiumRegistryAPI {
     }
     // Process rejects prior to application
     if (late && !FBConfig.Utils.forcedEarlyMixinConfigAdditionsSet.contains(configuration)) {
-      LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
+      LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
       lateMixins.put(configuration, supplier);
     } else {
-      LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
+      LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
       earlyMixins.put(configuration, supplier);
     }
   }
