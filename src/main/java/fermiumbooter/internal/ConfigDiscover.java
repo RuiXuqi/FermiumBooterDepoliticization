@@ -78,7 +78,7 @@ public class ConfigDiscover {
                                 String cof = configMap.get(name);
                                 if (cof.contains("B:\"" + fname + "\"=") || cof.contains("B:" + fname + "=")) {
                                     configValue = cof.contains("B:\"" + fname + "\"=true") || cof.contains("B:" + fname + "=true");
-                                    LOGGER.inof("{} is {}", fname, configValue);
+                                    LOGGER.info("{} is {}", fname, configValue);
                                 } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }
