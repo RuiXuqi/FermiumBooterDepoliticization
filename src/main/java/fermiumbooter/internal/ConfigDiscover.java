@@ -111,6 +111,7 @@ public class ConfigDiscover {
                                 FermiumRegistryAPI.enqueueMixin(true, lateMixin, ()->
                                 {
                                     if(FBConfig.overrideMixinCompatibilityChecks) {
+                                        boolean disableMixin = false;
                                         for (CompatHandingRecord compat : compatHandingRecords) {
                                             if (compat.desired != FermiumRegistryAPI.isModPresent(compat.modid)) {
                                                 LOGGER.error(
@@ -120,9 +121,12 @@ public class ConfigDiscover {
                                                         compat.desired ? "without" : "with",
                                                         compat.modid, compat.reason);
                                                 if (compat.disableMixin) {
-                                                    return false;
+                                                    disableMixin = true;
                                                 }
                                             }
+                                        }
+                                        if (disableMixin) {
+                                            return false;
                                         }
                                     }
                                     return configValue;
