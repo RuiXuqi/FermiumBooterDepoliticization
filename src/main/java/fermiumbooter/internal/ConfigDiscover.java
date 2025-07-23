@@ -24,18 +24,19 @@ public class ConfigDiscover {
     private static final Logger LOGGER = FermiumPlugin.LOGGER;
 
     public static void load(DiscoveryHandler discoveryHandler) {
-        HashMap<String, HashMap<String, Boolean>> configMap = new HashMap<>();
+        HashMap<String, String> configMap = new HashMap<>();
+        File configDir = new File(Launch.minecraftHome, "config");
         for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lfermiumbooter/annotations/MixinConfig;")) {
             if (asmData.values != null && asmData.values.containsKey("name")) {
                 String name = (String) asmData.values.get("name");
                 if (!configMap.containsKey(name)) {
-                    try (Stream<String> lines = Files.lines(new File(Launch.minecraftHome, "config/" + name + ".cfg").toPath())) {
-                        for (String line : lines.map(String::trim).filter((s) -> s.startsWith("B:")).collect(Collectors.toList())) {
-                            String kname = line.substring(2, line.lastIndexOf('='));
-                            String kvalue = line.substring(line.lastIndexOf('=') + 1);
-                            configMap.computeIfAbsent(name, (k)->new HashMap<>())
-                                    .put(kname, Boolean.parseBoolean(kvalue));
-                        }
+                    try  {
+                        File file = new File(configDir,  name + ".cfg");
+                        if (file.exists()) {
+                            try(Stream<String> stream = Files.lines(file.toPath())) {
+                                configMap.put(name,  stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining()));
+                            }
+                        } else configMap.put(name, "");
                     } catch (IOException e) {
                         LOGGER.error("Could not read config {}.cfg for {}" ,name, asmData.className, e);
                     }
@@ -72,9 +73,9 @@ public class ConfigDiscover {
                         final boolean configValue;
                         {
                             if (configMap.containsKey(name)) {
-                                if (configMap.get(name).containsKey(fname)) {
-                                    configValue = configMap.get(name).get(fname);
-                                } else configValue = configMap.get(name).getOrDefault('"' + fname + '"', defaultValue);
+                                if (configMap.get(name).contains("B:\"" + fname + "\"=") || configMap.get(name).contains("B:" + fname + "=")) {
+                                    configValue = configMap.get(name).contains("B:\"" + fname + "\"=true") || configMap.get(name).contains("B:" + fname + "=true");
+                                } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }
 
