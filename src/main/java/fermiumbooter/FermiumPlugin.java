@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
+import fermiumbooter.internal.ConfigDiscover;
 import fermiumbooter.internal.DiscoveryHandler;
 import fermiumbooter.internal.FBConfig;
 import fermiumbooter.internal.UpdateHelper;
@@ -25,7 +26,7 @@ import com.cleanroommc.configanytime.ConfigAnytime;
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
   static {
-    com.cleanroommc.configanytime.ConfigAnytime.register(FBConfig.class);
+    ConfigAnytime.register(FBConfig.class);
   }
   
   public static final Logger LOGGER = LogManager.getLogger("FermiumBooterDepoliticization");
@@ -78,15 +79,7 @@ public class FermiumPlugin
       }
     }
 
-    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lnet/minecraftforge/common/config/Config;")) {
-      if (asmData.values != null && asmData.values.containsKey("modid") && usingFermiumBooterMods.contains((String) asmData.values.get("modid"))) {
-        try {
-          FermiumRegistryAPI.registerAnnotatedMixinConfig(Class.forName(asmData.className.replace('/', '.'), true, Launch.classLoader), null);
-        } catch (Throwable t) {
-          LOGGER.error("Error at Register MixinConfig " + asmData.className.replace('/', '.') , t);
-        }
-      }
-    }
+    ConfigDiscover.load(discoveryHandler);
   }
 
   public static void makeFMLCorePluginContainsFMLMod(File file) {
