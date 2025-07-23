@@ -34,7 +34,9 @@ public class ConfigDiscover {
                         File file = new File(configDir,  name + ".cfg");
                         if (file.exists() && file.isFile()) {
                             try(Stream<String> stream = Files.lines(file.toPath())) {
-                                configMap.put(name, stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining(", ")));
+                                String cof = stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining(", "));
+                                LOGGER.info("configFile {} * {}", name, cof);
+                                configMap.put(name, cof);
                             }
                         } else configMap.put(name, "");
                     } catch (IOException e) {
@@ -73,6 +75,10 @@ public class ConfigDiscover {
                         final boolean configValue;
                         {
                             if (configMap.containsKey(name)) {
+                                String cof = configMap.get(name);
+                                LOGGER.info("cof {} * {}", name, cof);
+                                LOGGER.info("B:\"" + fname + "\"=");
+                                LOGGER.info("B:" + fname + "=")
                                 if (configMap.get(name).contains("B:\"" + fname + "\"=") || configMap.get(name).contains("B:" + fname + "=")) {
                                     configValue = configMap.get(name).contains("B:\"" + fname + "\"=true") || configMap.get(name).contains("B:" + fname + "=true");
                                 } else configValue = defaultValue;
