@@ -32,10 +32,10 @@ public class ConfigDiscover {
                     configMap.computeIfAbsent(name, (k)->new HashMap<>());
                     try (Stream<String> lines = Files.lines(new File(Launch.minecraftHome, "config/" + name + ".cfg").toPath())) {
                         for (String line : lines.map(String::trim).filter((s) -> s.startsWith("B:")).collect(Collectors.toList())) {
-                            String name = line.substring(2, line.lastIndexOf('='));
-                            String value = line.substring(line.lastIndexOf('=') + 1);
+                            String kname = line.substring(2, line.lastIndexOf('='));
+                            String kvalue = line.substring(line.lastIndexOf('=') + 1);
                             configMap.computeIfAbsent(name, (k)->new HashMap<>())
-                                    .put(name, Boolean.parseBoolean(value));
+                                    .put(kname, Boolean.parseBoolean(kvalue));
                         }
                     } catch (IOException e) {
                         LOGGER.error("Could not read config {}.cfg for {}" ,name, asmData.className, e);
