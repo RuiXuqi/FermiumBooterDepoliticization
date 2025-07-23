@@ -34,7 +34,7 @@ public class ConfigDiscover {
                         File file = new File(configDir,  name + ".cfg");
                         if (file.exists() && file.isFile()) {
                             try(Stream<String> stream = Files.lines(file.toPath())) {
-                                configMap.put(name, stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining()));
+                                configMap.put(name, stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining(", ")));
                             }
                         } else configMap.put(name, "");
                     } catch (IOException e) {
