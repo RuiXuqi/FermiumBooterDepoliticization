@@ -82,7 +82,7 @@ public abstract class FermiumRegistryAPI {
   public static void enqueueMixin(boolean late, String configuration, BooleanSupplier supplier) {
     checkState();
     if (configuration == null || configuration.trim().isEmpty()) {
-      LOGGER.debug("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
+      LOGGER.error("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
       return;
     }
     if (supplier == null) { // Do not evaluate supplier.get() itself for null now
@@ -91,10 +91,10 @@ public abstract class FermiumRegistryAPI {
     }
     // Process rejects prior to application
     if (late && !FBConfig.Utils.forcedEarlyMixinConfigAdditionsSet.contains(configuration)) {
-      LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
+      LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
       lateMixins.put(configuration, supplier);
     } else {
-      LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
+      LOGGER.info("FermiumRegistryAPI supplied \"" + configuration + "\" for early mixin enqueue, adding.");
       earlyMixins.put(configuration, supplier);
     }
   }
