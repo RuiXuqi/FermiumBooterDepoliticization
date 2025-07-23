@@ -76,11 +76,9 @@ public class ConfigDiscover {
                         {
                             if (configMap.containsKey(name)) {
                                 String cof = configMap.get(name);
-                                LOGGER.info("cof {} * {}", name, cof);
-                                LOGGER.info("B:\"" + fname + "\"=");
-                                LOGGER.info("B:" + fname + "=");
-                                if (configMap.get(name).contains("B:\"" + fname + "\"=") || configMap.get(name).contains("B:" + fname + "=")) {
-                                    configValue = configMap.get(name).contains("B:\"" + fname + "\"=true") || configMap.get(name).contains("B:" + fname + "=true");
+                                if (cof.contains("B:\"" + fname + "\"=") || cof.contains("B:" + fname + "=")) {
+                                    configValue = cof.contains("B:\"" + fname + "\"=true") || cof.contains("B:" + fname + "=true");
+                                    LOGGER.inof("{} is {}", fname, configValue);
                                 } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }
