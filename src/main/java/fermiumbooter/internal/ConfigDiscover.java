@@ -35,7 +35,6 @@ public class ConfigDiscover {
                         if (file.exists() && file.isFile()) {
                             try(Stream<String> stream = Files.lines(file.toPath())) {
                                 String cof = stream.filter(s -> s.trim().startsWith("B:")).collect(Collectors.joining(", "));
-                                LOGGER.info("configFile {} * {}", name, cof);
                                 configMap.put(name, cof);
                             }
                         } else configMap.put(name, "");
@@ -78,7 +77,6 @@ public class ConfigDiscover {
                                 String cof = configMap.get(name);
                                 if (cof.contains("B:\"" + fname + "\"=") || cof.contains("B:" + fname + "=")) {
                                     configValue = cof.contains("B:\"" + fname + "\"=true") || cof.contains("B:" + fname + "=true");
-                                    LOGGER.info("{} is {}", fname, configValue);
                                 } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }

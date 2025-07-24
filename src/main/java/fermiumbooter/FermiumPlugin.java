@@ -37,23 +37,30 @@ public class FermiumPlugin
   public String[] getASMTransformerClass() {
     return null;
   }
+
   @Override
   public String getModContainerClass() {
     return "fermiumbooter.FermiumBooter";
   }
+
   @Override
   public String getSetupClass() {
     return null;
   }
+
   @Override
   public String getAccessTransformerClass() {
     return null;
   }
+
   @Override
   public void injectData(Map<String, Object> data) {
     source = (File) data.get("coremodLocation");
     if (source != null)
       makeFMLCorePluginContainsFMLMod(source);
+  }
+
+  public static void init() {
     DiscoveryHandler discoveryHandler = new DiscoveryHandler();
     discoveryHandler.build();
     for (String str : FBConfig.forcedEarlyMixinConfigRemovals) {
@@ -90,6 +97,7 @@ public class FermiumPlugin
 
   @Override
   public List<String> getMixinConfigs() {
+    init();
     return Arrays.asList(
         FermiumRegistryAPI.getEarlyMixins().keySet().toArray(new String[0]));
   }
