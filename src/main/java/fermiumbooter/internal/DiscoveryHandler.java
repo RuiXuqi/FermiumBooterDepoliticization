@@ -81,12 +81,14 @@ public class DiscoveryHandler {
     private void processJarFile(File jarFile) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jarFile.toPath(), (ClassLoader) null)) {
             final Path root = fs.getPath("/");
-            Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), 99, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (isClassFile(file)) {
                         try (InputStream is = Files.newInputStream(file)) {
                             processClassStream(jarFile, is);
+                        } catch (Throwable t) {
+
                         }
                     }
                     return FileVisitResult.CONTINUE;
