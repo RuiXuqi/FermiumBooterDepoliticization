@@ -172,6 +172,10 @@ public class DiscoveryHandler {
             }
         }
 
+        for (File f : allFiles) {
+            FermiumPlugin.LOGGER.debug("ADD SCAN JAR : {}", f);
+        }
+
         // Process unique files
         allFiles.forEach(this::addFor);
     }
