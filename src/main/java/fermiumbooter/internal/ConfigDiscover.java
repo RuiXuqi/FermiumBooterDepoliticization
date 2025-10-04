@@ -27,6 +27,7 @@ public class ConfigDiscover {
         HashMap<String, String> configMap = new HashMap<>();
         File configDir = new File(Launch.minecraftHome, "config");
         for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lfermiumbooter/annotations/MixinConfig;")) {
+            LOGGER.info("TEMP: FOUND CONFIG CLASS {}", asmData.className);
             if (asmData.values != null && asmData.values.containsKey("name")) {
                 String name = (String) asmData.values.get("name");
                 if (!configMap.containsKey(name)) {
@@ -58,6 +59,10 @@ public class ConfigDiscover {
                         final String earlyMixin = Annotations.getValue(mixinToggle, "earlyMixin", (String) null);
                         final String lateMixin = Annotations.getValue(mixinToggle, "lateMixin", (String) null);
                         final boolean defaultValue = Annotations.getValue(mixinToggle, "defaultValue", Boolean.FALSE);
+                        LOGGER.info("TEMP: FOUND CONFIG ELEMENT {}", fn.name);
+                        LOGGER.info("TEMP: EARLY", earlyMixin);
+                        LOGGER.info("TEMP: LATE", lateMixin);
+                        LOGGER.info("TEMP: DEFAULT", defaultValue);
                         final HashSet<CompatHandingRecord> compatHandingRecords = new HashSet<>();
                         {
                             AnnotationNode compatHandlings = Annotations.getVisible(fn, MixinConfig.CompatHandlings.class);
@@ -80,6 +85,7 @@ public class ConfigDiscover {
                                 } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }
+                        LOGGER.info("TEMP: VAR", configValue);
 
                         if (earlyMixin != null) {
                             if (compatHandingRecords.isEmpty()) {
