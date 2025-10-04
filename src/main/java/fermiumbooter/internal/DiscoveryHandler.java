@@ -43,6 +43,10 @@ public class DiscoveryHandler {
             this.annName = annName;
             this.values = values;
         }
+
+        public String toString() {
+            return "" + source + " " + className + " " + annName + super.toString();
+        }
     }
     public final SetMultimap<String, ASMData> datas = HashMultimap.create();
 
@@ -110,11 +114,15 @@ public class DiscoveryHandler {
 
               if (classNode.visibleAnnotations != null) for (AnnotationNode annotationNode: classNode.visibleAnnotations) {
                 if (annotationNode.values == null || annotationNode.values.isEmpty()) {
-                       this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null));
+                    var asmData = new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null);
+                    this.datas.put(annotationNode.desc, asmData);
+                    FermiumPlugin.LOGGER.debug("process Ann : {}", asmData);
                 } else {
                     HashMap<String, Object> maps = new HashMap<>();
                     annotationNode.accept(new ModAnnotationVisitor(maps));
-                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
+                    var asmData = new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps);
+                    this.datas.put(annotationNode.desc, asmData);
+                    FermiumPlugin.LOGGER.debug("process Ann : {}", asmData);
                 }
             }
         } catch (Exception e) {
