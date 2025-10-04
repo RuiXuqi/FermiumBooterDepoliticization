@@ -126,9 +126,15 @@ public abstract class FermiumRegistryAPI {
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
     rejectMixins.add(configuration);
   }
+
+  public static boolean isModPresent(String modid) {
+    boolean r = isModPresent0(modid);
+    LOGGER.debug("FermiumRegistryAPI : {} is {} present", modid, r);
+    return r;
+  }
   
   // why static instead of dynamic
-  public static boolean isModPresent(String modid) {
+  public static boolean isModPresent0(String modid) {
     return (activeContext != null && activeContext.isModPresent(modid))
       || (mods != null && mods.contains(modid))
       || FBConfig.Utils.forcedEarlyMixinConfigLoadedModsSet.contains(modid);

@@ -45,7 +45,7 @@ public class DiscoveryHandler {
         }
 
         public String toString() {
-            return "" + source + " " + className + " " + annName + super.toString();
+            return "Source :" + source + "\n class : " + className + "\n annotation description : " + annName + "\n address :" +super.toString();
         }
     }
     public final SetMultimap<String, ASMData> datas = HashMultimap.create();
