@@ -1,12 +1,17 @@
 .gradle
 **/build/
 !src/**/build/
+run/
+out/
 
 # Ignore Gradle GUI config
 gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
 !gradle-wrapper.jar
+
+# Avoid ignore Gradle wrappper properties
+!gradle-wrapper.properties
 
 # Cache of project
 .gradletasknamecache
@@ -17,10 +22,6 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+# IDEA config
 .idea
-**/run/
-!src/**/run/
-**/libs/
-!src/**/libs/
-**/out/
-!src/**/out/
+
