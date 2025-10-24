@@ -6,12 +6,12 @@ import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
-@Mod(modid = FermiumBooter.MODID, version = FermiumBooter.VERSION, name = FermiumBooter.NAME)
+@Mod(modid = FermiumBooter.MODID, version = FermiumBooter.VERSION, name = FermiumBooter.NAME, dependencies = "required-after:mixinbooter@[8.0,)")
 public class FermiumBooter {
 	
     public static final String MODID = "fermiumbooter";
     public static final String VERSION = "1.4.0";
-    public static final String NAME = "FermiumBooter";
+    public static final String NAME = "FermiumKiller 9000";
 	
 	@SidedProxy(clientSide = "fermiumbooter.proxy.ClientProxy", serverSide = "fermiumbooter.proxy.CommonProxy")
 	public static CommonProxy PROXY;
