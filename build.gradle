@@ -5,8 +5,8 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.9'
-    id 'com.gradleup.shadow' version '9.0.2'
-    id 'xyz.wagyourtail.unimined' version '1.4.1'
+    id 'com.gradleup.shadow' version '9.2.2'
+    id 'xyz.wagyourtail.unimined' version '1.4.7-kappa'
     id 'net.kyori.blossom'  version '2.1.0'
     //id 'com.diffplug.spotless' version '7.2.1'
 }
@@ -108,6 +108,7 @@ unimined.minecraft {
 
     mods {
         remap(configurations.modCompileOnly)
+        remap(configurations.modRuntimeOnly)
     }
 }
 
@@ -252,14 +253,34 @@ remapJar {
 }
 
 idea {
+    module {
+        inheritOutputDirs = true
+    }
     project {
         settings {
             runConfigurations {
-                "Apply Spotless"(Gradle) {
-                    taskNames = ["spotlessApply"]
+                "1. Run Client"(Gradle) {
+                    taskNames = ["runClient"]
                 }
-                "Build Mod"(Gradle) {
+                "2. Run Server"(Gradle) {
+                    taskNames = ["runServer"]
+                }
+                "3. Run Obfuscated Client"(Gradle) {
+                    taskNames = ["runObfClient"]
+                }
+                "4. Run Obfuscated Server"(Gradle) {
+                    taskNames = ["runObfServer"]
+                }
+                "5. Build Mod"(Gradle) {
                     taskNames = ["build"]
+                }
+            }
+            compiler.javac {
+                afterEvaluate {
+                    javacAdditionalOptions = "-encoding utf8"
+                    moduleJavacAdditionalOptions = [
+                            (project.name + ".main"): tasks.compileJava.options.compilerArgs.collect { '"' + it + '"' }.join(' ')
+                    ]
                 }
             }
         }
