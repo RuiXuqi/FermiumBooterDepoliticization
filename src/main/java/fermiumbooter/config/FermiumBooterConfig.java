@@ -8,6 +8,9 @@ import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Config(modid = FermiumBooter.MODID)
 @MixinConfig(name = FermiumBooter.MODID)
 public class FermiumBooterConfig {
@@ -34,6 +37,15 @@ public class FermiumBooterConfig {
 	@Config.RequiresMcRestart
 	@MixinConfig.MixinToggle(earlyMixin = "mixins.fermiumbooter.crashreport.json", defaultValue = true)
 	public static boolean appendGeneralMixinExceptionsToCrashReports = true;
+
+	@Config.Comment("Appends prior mixin exceptions to crash reports to help diagnose crashes")
+	@Config.Name("Jar Scanner Manual Overrides")
+	public static Map<String, String> jarScannerOverrides = new HashMap<String, String>(){{
+		put("net/jan/moddirector", "moddirector");
+		put("git/jbredwards/jsonpaintings", "jsonpaintings");
+		put("net/optifine", "optifine");
+	}};
+
 	
 	@Mod.EventBusSubscriber(modid = FermiumBooter.MODID)
 	private static class ConfigSyncHandler {
