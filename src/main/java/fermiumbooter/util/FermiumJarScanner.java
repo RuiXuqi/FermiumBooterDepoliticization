@@ -282,9 +282,7 @@ public abstract class FermiumJarScanner {
 						String presentName = presentMods.get(compatInfo.modId).modName;
 						if(!compatInfo.modName.equals(presentName)) { //includes || presentName == null
 							LOGGER.debug("FermiumMixinConfig config \"{}\" from {} found compat mod {} but with different mod name {} than target {}.", mixinConfig.name, mixinConfig.modId, compatInfo.modId, presentName, compatInfo.modName);
-							// desired and present but wrong name -> was no issue, now it is.
-							// not desired but present but diff name -> was issue, now not anymore
-							hasCompatIssue = !hasCompatIssue;
+							targetedModFitsSpecification = false;
 						}
 					}
 					if(compatInfo.modVersionRange != null) {
@@ -297,11 +295,13 @@ public abstract class FermiumJarScanner {
 						}
 						if(isOutsideVersionRange) {
 							LOGGER.debug("FermiumMixinConfig config \"{}\" from {} found compat mod {} but with version {} outside target range {}.", mixinConfig.name, mixinConfig.modId, compatInfo.modId, presentVersion, compatInfo.modVersionRange);
-							// desired and present, but wrong version -> was no issue, now it is.
-							// not desired but present, but diff version -> was issue, now not anymore
-							hasCompatIssue = !hasCompatIssue;
+							targetedModFitsSpecification = false;
 						}
 					}
+					// desired and present but wrong name/version -> was no issue, now it is.
+					// not desired but present but diff name/version -> was issue, now not anymore
+					if(!targetedModFitsSpecification)
+						hasCompatIssue = !hasCompatIssue;
 				}
 
 				if(hasCompatIssue) {
