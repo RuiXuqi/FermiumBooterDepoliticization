@@ -95,7 +95,7 @@ public abstract class FermiumJarScanner {
 				manualOverrides.put(entry.getKey(), entry.getValue().getString());
 
 		//search for @Mod and @MixinConfig annotated classes
-		List<String> mixinConfigPaths = new ArrayList<>();
+		Set<String> mixinConfigPaths = new HashSet<>();
 		try (ScanResult scanResult = new ClassGraph()
 				.enableAnnotationInfo()
 				.disableModuleScanning()
@@ -149,7 +149,7 @@ public abstract class FermiumJarScanner {
 
 			//search for @MixinConfig
 			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(MixinConfig.class.getName()))
-				mixinConfigPaths.add(classInfo.getPackageName()+".*");
+				mixinConfigPaths.add(classInfo.getPackageName()+".");
 		} catch(Exception e) {
 			LOGGER.error("Crashed while parsing jars!");
 			e.printStackTrace(System.err);
