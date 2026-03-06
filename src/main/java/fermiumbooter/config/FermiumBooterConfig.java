@@ -49,6 +49,7 @@ public class FermiumBooterConfig {
 		put("net.jan.moddirector", "moddirector");
 		put("git.jbredwards.jsonpaintings", "jsonpaintings");
 		put("net.optifine", "optifine");
+		put("gg.essential", "essential");
 	}};
 
 	
