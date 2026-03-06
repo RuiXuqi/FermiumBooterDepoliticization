@@ -49,7 +49,7 @@ public @interface MixinConfig {
 	@interface CompatHandling {
 		String modid();
 		String modName() default "";
-		String acceptableVersionRange() default "";
+		String targetVersionRange() default "";
 		boolean desired();
 		boolean disableMixin() default true;
 		boolean warnIngame() default true;

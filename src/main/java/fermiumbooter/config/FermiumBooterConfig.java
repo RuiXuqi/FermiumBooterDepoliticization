@@ -38,12 +38,17 @@ public class FermiumBooterConfig {
 	@MixinConfig.MixinToggle(earlyMixin = "mixins.fermiumbooter.crashreport.json", defaultValue = true)
 	public static boolean appendGeneralMixinExceptionsToCrashReports = true;
 
-	@Config.Comment("Appends prior mixin exceptions to crash reports to help diagnose crashes")
+	@Config.Comment({
+			"Used to detect mods that don't use @Mod or mcmod.info to define their modid",
+			"If the jar scanner finds the given package, it will set the respective modid as being present. ",
+			"It is not possible to filter for version or modname when using this system",
+			"Pattern: S:path.of.package=modid"
+	})
 	@Config.Name("Jar Scanner Manual Overrides")
 	public static Map<String, String> jarScannerOverrides = new HashMap<String, String>(){{
-		put("net/jan/moddirector", "moddirector");
-		put("git/jbredwards/jsonpaintings", "jsonpaintings");
-		put("net/optifine", "optifine");
+		put("net.jan.moddirector", "moddirector");
+		put("git.jbredwards.jsonpaintings", "jsonpaintings");
+		put("net.optifine", "optifine");
 	}};
 
 	

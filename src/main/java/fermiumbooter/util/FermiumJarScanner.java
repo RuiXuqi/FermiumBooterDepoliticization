@@ -12,9 +12,9 @@ import io.github.classgraph.*;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.Property;
-import net.minecraftforge.fml.relauncher.libraries.Artifact;
-import net.minecraftforge.fml.relauncher.libraries.LibraryManager;
-import net.minecraftforge.fml.relauncher.libraries.Repository;
+import net.minecraftforge.fml.common.versioning.ArtifactVersion;
+import net.minecraftforge.fml.common.versioning.InvalidVersionSpecificationException;
+import net.minecraftforge.fml.common.versioning.VersionRange;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,10 +26,8 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 
 /**
  * Handler for searching for modids and @MixinConfig handling
@@ -74,7 +72,6 @@ public abstract class FermiumJarScanner {
 	
 	public static void clearCaches() {
 		mixinToggles.clear();
-		manualOverrides.clear();
 		modConfigMap.clear();
 	}
 	
@@ -91,21 +88,11 @@ public abstract class FermiumJarScanner {
 		//Always feels wrong but it works
 		File mcDir = new File(".");
 
-		List<Artifact> maven_canidates = LibraryManager.flattenLists(mcDir);
-		List<File> file_canidates = LibraryManager.gatherLegacyCanidates(mcDir);
-		for(Artifact artifact : maven_canidates) {
-			artifact = Repository.resolveAll(artifact);
-			if(artifact != null) {
-				File target = artifact.getFile();
-				if(!file_canidates.contains(target)) {
-					file_canidates.add(target);
-				}
-			}
-		}
-
-		for(File modFile : file_canidates) {
-			searchJarFile(modFile); //search for config overridden special cases
-		}
+		Map<String, String> manualOverrides = new HashMap<>();
+		ConfigCategory cat = FermiumPlugin.CONFIG.getCategory("general.jar scanner manual overrides");
+		if(cat != null)
+			for(Map.Entry<String, Property> entry : cat.getValues().entrySet())
+				manualOverrides.put(entry.getKey(), entry.getValue().getString());
 
 		//search for @Mod and @MixinConfig annotated classes
 		List<String> mixinConfigPaths = new ArrayList<>();
@@ -114,7 +101,7 @@ public abstract class FermiumJarScanner {
 				.disableModuleScanning()
 				.overrideClasspath(
 						mcDir.getAbsolutePath()+"/mods/*"+ File.pathSeparatorChar+
-								Arrays.stream(Launch.classLoader.getURLs()).map(URL::getPath).collect(Collectors.joining(File.pathSeparator))
+								Arrays.stream(Launch.classLoader.getURLs()).map(URL::getPath).collect(Collectors.joining(File.pathSeparator)) //not the biggest fan of this
 				)
 				.rejectPackages(
 						"java.*",
@@ -146,6 +133,16 @@ public abstract class FermiumJarScanner {
 				}
 			}
 
+			if(!manualOverrides.isEmpty()) {
+				List<String> packages = scanResult.getPackageInfo().stream().map(PackageInfo::getName).collect(Collectors.toList());
+				for (Map.Entry<String, String> entry : manualOverrides.entrySet()) {
+					if (packages.contains(entry.getKey())) {
+						String modid = manualOverrides.get(entry.getKey());
+						presentMods.put(modid, new ModInfo(modid, null, null));
+					}
+				}
+			}
+
 			//search for @Mod
 			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(modClassName))
 				parseMod(classInfo);
@@ -153,6 +150,9 @@ public abstract class FermiumJarScanner {
 			//search for @MixinConfig
 			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(MixinConfig.class.getName()))
 				mixinConfigPaths.add(classInfo.getPackageName()+".*");
+		} catch(Exception e) {
+			LOGGER.error("Crashed while parsing jars!");
+			e.printStackTrace(System.err);
 		}
 		earlyModIDs.addAll(presentMods.keySet()); // just for mix2ferm
 
@@ -166,51 +166,13 @@ public abstract class FermiumJarScanner {
 		) {
 			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(MixinConfig.class.getName()))
 				parseMixinConfig(classInfo);
+		} catch(Exception e) {
+			LOGGER.error("Crashed while parsing mixin toggles!");
+			e.printStackTrace(System.err);
 		}
 
 		long elapsed = System.currentTimeMillis() - time;
 		LOGGER.debug("Searching through present mods took {} ms", elapsed);
-	}
-
-	private static Map<String, String> manualOverrides = null;
-	
-	private static void searchJarFile(File modFile) {
-		if(manualOverrides == null){
-			manualOverrides = new HashMap<>();
-			ConfigCategory cat = FermiumPlugin.CONFIG.getCategory("general.jar scanner manual overrides");
-			if(cat != null)
-				for(Map.Entry<String, Property> entry : cat.getValues().entrySet())
-					manualOverrides.put(entry.getKey(), entry.getValue().getString());
-		}
-
-		//Search jar
-		try(JarFile jar = new JarFile(modFile)) {
-			//Iterate files in jar for manual overrides
-			if(manualOverrides.isEmpty()) return;
-			for(ZipEntry ze : Collections.list(jar.entries())) {
-				//Skip irrelevant paths/files that waste time
-				if(ze.getName().contains("__MACOSX")) continue;
-				if(ze.getName().contains("module-info")) continue;
-				if(ze.getName().startsWith("org/spongepowered")) continue;
-				if(ze.getName().startsWith("com/llamalad7")) continue;
-				if(ze.getName().startsWith("com/bawnorton")) continue;
-				if(ze.getName().startsWith("io/github/classgraph")) continue;
-				if(ze.getName().startsWith("it/unimi")) continue;
-				if(ze.getName().startsWith("kotlin")) continue;
-
-				//Manual error avoidance/compat
-				for(Map.Entry<String, String> entry : manualOverrides.entrySet()) {
-					if(ze.getName().startsWith(entry.getKey())){ //startsWith should be faster than contains
-						String modid = manualOverrides.remove(entry.getKey());
-						presentMods.put(modid, new ModInfo(modid, null, null));
-						return;
-					}
-				}
-			}
-		}
-		catch(Exception ex) {
-			LOGGER.log(Level.ERROR, "FermiumJarScanner failed to search jar file {}.", modFile.getName());
-		}
 	}
 	
 	private static void searchModInfoRecursive(JsonElement element) {
@@ -240,8 +202,15 @@ public abstract class FermiumJarScanner {
 		String modid = getOptionalAnnoParam(params.get("modid"));
 		String version = getOptionalAnnoParam(params.get("version"));
 		String name = getOptionalAnnoParam(params.get("name"));
-		if(modid != null && !modid.isEmpty())
-			presentMods.put(modid, new ModInfo(modid, version, name));
+		if(modid != null && !modid.isEmpty()) {
+			if(presentMods.containsKey(modid)) {
+				ModInfo mcmodInfo = presentMods.get(modid);
+				//if modid already found through mcmod.info, prefer @Mod values if they aren't null
+				mcmodInfo.modName = name == null ? mcmodInfo.modName : name;
+				if(version != null) mcmodInfo.setVersion(version);
+			} else
+				presentMods.put(modid, new ModInfo(modid, version, name));
+		}
 	}
 
 	private static void parseMixinConfig(ClassInfo classInfo) {
@@ -265,7 +234,7 @@ public abstract class FermiumJarScanner {
 						AnnotationParameterValueList compatParams = compatAnno.getParameterValues();
 						String modId = getOptionalAnnoParam(compatParams.get("modid"));
 						String modName = getOptionalAnnoParam(compatParams.get("modName"));
-						String modVersionRange = getOptionalAnnoParam(compatParams.get("acceptableVersionRange"));
+						String modVersionRange = getOptionalAnnoParam(compatParams.get("targetVersionRange"));
 						boolean desired = (boolean) compatParams.get("desired").getValue();
 						boolean disableMixin = getOptionalAnnoParamBoolean(compatParams.get("disableMixin"), true);
 						boolean warnIngame = getOptionalAnnoParamBoolean(compatParams.get("warnIngame"), true);
@@ -281,7 +250,10 @@ public abstract class FermiumJarScanner {
 	}
 
 	private static String getOptionalAnnoParam(AnnotationParameterValue param) {
-		return param != null ? param.getValue().toString() : null;
+		if(param == null) return null;
+		String val = param.getValue().toString();
+		if(val == null || val.isEmpty()) return null;
+		return val;
 	}
 
 	private static boolean getOptionalAnnoParamBoolean(AnnotationParameterValue param, boolean defaultVal) {
@@ -293,18 +265,46 @@ public abstract class FermiumJarScanner {
 		if(!shouldApply) return;
 
 		if(!skipCompatHandlingChecks()) {
-			for(MixinConfigInfo.CompatInfo compatAnno : mixinConfig.compatInfos) {
-				//TODO: mod name + version range
-				if(compatAnno.desired != isModPresent(compatAnno.modId)) {
-					if(compatAnno.warnIngame) warningCount++;
-					if(compatAnno.disableMixin) {
+			for(MixinConfigInfo.CompatInfo compatInfo : mixinConfig.compatInfos) {
+				boolean hasCompatIssue = compatInfo.desired != isModPresent(compatInfo.modId); //modid is absent even though it should be present, or modid is present even though it should be absent
+
+				if(isModPresent(compatInfo.modId)) {
+					if(compatInfo.modName != null) { //target specific mod name
+						String presentName = presentMods.get(compatInfo.modId).modName;
+						if(!compatInfo.modName.equals(presentName)) { //includes || presentName == null
+							LOGGER.debug("FermiumMixinConfig config \"{}\" from {} found compat mod {} but with different mod name {} than target {}.", mixinConfig.name, mixinConfig.modId, compatInfo.modId, presentName, compatInfo.modName);
+							// desired and present but wrong name -> was no issue, now it is.
+							// not desired but present but diff name -> was issue, now not anymore
+							hasCompatIssue = !hasCompatIssue;
+						}
+					}
+					if(compatInfo.modVersionRange != null) {
+						ArtifactVersion presentVersion =  presentMods.get(compatInfo.modId).version;
+						boolean isOutsideVersionRange = false;
+						try {
+							isOutsideVersionRange = !isInVersionRange(presentVersion, compatInfo.modVersionRange);
+						} catch (InvalidVersionSpecificationException e) {
+							LOGGER.warn("FermiumMixinConfig config \"{}\" from {} specified invalid target version range {}, ignoring version check", mixinConfig.name, mixinConfig.modId, compatInfo.modVersionRange);
+						}
+						if(isOutsideVersionRange) {
+							LOGGER.debug("FermiumMixinConfig config \"{}\" from {} found compat mod {} but with version {} outside target range {}.", mixinConfig.name, mixinConfig.modId, compatInfo.modId, presentVersion, compatInfo.modVersionRange);
+							// desired and present, but wrong version -> was no issue, now it is.
+							// not desired but present, but diff version -> was issue, now not anymore
+							hasCompatIssue = !hasCompatIssue;
+						}
+					}
+				}
+
+				if(hasCompatIssue) {
+					if(compatInfo.warnIngame) warningCount++;
+					if(compatInfo.disableMixin) {
 						shouldApply = false;
 						LOGGER.log(Level.ERROR, "FermiumMixinConfig config \"{}\" from {} disabled as incompatible {} {}: {}.", mixinConfig.name, mixinConfig.modId, (
-								compatAnno.desired ? "without" : "with"), compatAnno.modId, compatAnno.reason);
+								compatInfo.desired ? "without" : "with"), compatInfo.modId, compatInfo.reason);
 					}
 					else {
 						LOGGER.log(Level.WARN, "FermiumMixinConfig config \"{}\" from {} may have issues {} {}: {}.", mixinConfig.name, mixinConfig.modId, (
-								compatAnno.desired ? "without" : "with"), compatAnno.modId, compatAnno.reason);
+								compatInfo.desired ? "without" : "with"), compatInfo.modId, compatInfo.reason);
 					}
 				}
 			}
@@ -319,7 +319,13 @@ public abstract class FermiumJarScanner {
 				FermiumRegistryAPI.enqueueMixin(true, mixinConfig.lateJson);
 		}
 	}
-	
+
+    private static boolean isInVersionRange(ArtifactVersion presentVersion, String modVersionRange) throws InvalidVersionSpecificationException {
+        if(presentVersion == null) return false; //null is not in any range
+		if(modVersionRange.equals(presentVersion.getVersionString())) return true; // if targeting an exact version (or a very weirdly named one)
+		return VersionRange.createFromVersionSpec(modVersionRange).containsVersion(presentVersion); //works for a surprising range of ways to write a version
+    }
+
 	private static Boolean skipCompatHandlingChecks = null;
 	
 	private static boolean skipCompatHandlingChecks() {
