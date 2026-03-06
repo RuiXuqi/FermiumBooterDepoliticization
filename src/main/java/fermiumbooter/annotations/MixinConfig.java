@@ -48,6 +48,8 @@ public @interface MixinConfig {
 	@Repeatable(CompatHandlingContainer.class)
 	@interface CompatHandling {
 		String modid();
+		String modName() default "";
+		String acceptableVersionRange() default "";
 		boolean desired();
 		boolean disableMixin() default true;
 		boolean warnIngame() default true;
