@@ -222,7 +222,15 @@ public abstract class FermiumJarScanner {
 
 			try {
 				String fieldName = parsedField.getName();
-				AnnotationParameterValueList mixinToggleParams = parsedField.getAnnotationInfo().get(MixinConfig.MixinToggle.class.getName()).getParameterValues();
+
+				AnnotationInfoList annos = parsedField.getAnnotationInfo();
+
+				//use @Config.Name param for fieldName if present
+				AnnotationInfo cfgNameAnno = annos.get("net.minecraftforge.common.config.Config$Name");
+				if(cfgNameAnno != null)
+					fieldName = cfgNameAnno.getParameterValues().get("value").getValue().toString();
+
+				AnnotationParameterValueList mixinToggleParams = annos.get(MixinConfig.MixinToggle.class.getName()).getParameterValues();
 				boolean defaultValue = mixinToggleParams.get("defaultValue").getValue().toString().equals("true");
 				String early = getOptionalAnnoParam(mixinToggleParams.get("earlyMixin"));
 				String late = getOptionalAnnoParam(mixinToggleParams.get("lateMixin"));
@@ -269,6 +277,7 @@ public abstract class FermiumJarScanner {
 				boolean hasCompatIssue = compatInfo.desired != isModPresent(compatInfo.modId); //modid is absent even though it should be present, or modid is present even though it should be absent
 
 				if(isModPresent(compatInfo.modId)) {
+					boolean targetedModFitsSpecification = true;
 					if(compatInfo.modName != null) { //target specific mod name
 						String presentName = presentMods.get(compatInfo.modId).modName;
 						if(!compatInfo.modName.equals(presentName)) { //includes || presentName == null
