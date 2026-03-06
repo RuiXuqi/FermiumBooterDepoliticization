@@ -285,7 +285,7 @@ public abstract class FermiumJarScanner {
 							targetedModFitsSpecification = false;
 						}
 					}
-					if(compatInfo.modVersionRange != null) {
+					if(targetedModFitsSpecification && compatInfo.modVersionRange != null) {
 						ArtifactVersion presentVersion =  presentMods.get(compatInfo.modId).version;
 						boolean isOutsideVersionRange = false;
 						try {
