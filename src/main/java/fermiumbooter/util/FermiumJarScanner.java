@@ -42,6 +42,7 @@ public abstract class FermiumJarScanner {
 	private final static String modClassName = "net.minecraftforge.fml.common.Mod";
 
 	private static final Map<String, ModInfo> presentMods = new HashMap<>();
+	@Deprecated @SuppressWarnings({"DeprecatedIsStillUsed", "MismatchedQueryAndUpdateOfCollection"})
 	private static final Set<String> earlyModIDs = new HashSet<>();
 	private static final Set<MixinConfigInfo> mixinToggles = new HashSet<>();
 	private static int warningCount = 0;
