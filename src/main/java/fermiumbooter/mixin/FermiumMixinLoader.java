@@ -52,6 +52,7 @@ public abstract class FermiumMixinLoader {
 
         //Start FermiumBooter section
 
+        int submittedMixinConfigCount = 0;
         for(Map.Entry<String, List<Supplier<Boolean>>> entry : FermiumRegistryAPI.getLateMixins().entrySet()) {
             //Check for removals
             if(FermiumRegistryAPI.getRejectMixins().contains(entry.getKey())) {
@@ -71,8 +72,10 @@ public abstract class FermiumMixinLoader {
             if(enabled) {
                 FermiumPlugin.LOGGER.log(Level.INFO, "FermiumBooter adding \"{}\" for late mixin application.", entry.getKey());
                 Mixins.addConfiguration(entry.getKey());
+                submittedMixinConfigCount++;
             }
         }
+        FermiumPlugin.LOGGER.log(Level.INFO, "FermiumBooter submitted {} late mixin JSON configurations.", submittedMixinConfigCount);
 
         //Force clear the maps
         FermiumRegistryAPI.clear();

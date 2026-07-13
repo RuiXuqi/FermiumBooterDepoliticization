@@ -1,6 +1,7 @@
 package fermiumbooter.util;
 
 import com.google.gson.*;
+import com.google.common.base.Stopwatch;
 import fermiumbooter.FermiumRegistryAPI;
 import net.minecraftforge.fml.relauncher.libraries.Artifact;
 import net.minecraftforge.fml.relauncher.libraries.LibraryManager;
@@ -16,6 +17,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -46,16 +48,22 @@ public abstract class FermiumJarScanner {
 	
 	public static void handleCaching() {
 		if(!earlyModIDs.isEmpty() || !parsedClassVisitors.isEmpty()) return;
+		Stopwatch discoveryStopwatch = Stopwatch.createStarted();
 		
 		LOGGER.log(Level.INFO, "FermiumJarScanner beginning jar searching.");
+		Stopwatch jarSearchStopwatch = Stopwatch.createStarted();
 		startJarSearching();
-		LOGGER.log(Level.INFO, "FermiumJarScanner finished jar searching, found {} ModIDs.", earlyModIDs.size());
+		LOGGER.log(Level.INFO, "FermiumJarScanner finished jar searching, found {} ModIDs in {} ms.",
+				earlyModIDs.size(), jarSearchStopwatch.elapsed(TimeUnit.MILLISECONDS));
 		
 		LOGGER.log(Level.INFO, "FermiumMixinConfig beginning MixinConfig parsing.");
+		Stopwatch mixinConfigStopwatch = Stopwatch.createStarted();
 		for(ASMClassVisitor classVisitor : parsedClassVisitors) {
 			parseMixinConfigVisitor(classVisitor);
 		}
-		LOGGER.log(Level.INFO, "FermiumMixinConfig finished MixinConfig parsing, parsed {} config options with {} warnings", mixinConfigCount, warningCount);
+		LOGGER.log(Level.INFO, "FermiumMixinConfig finished MixinConfig parsing, parsed {} config options with {} warnings in {} ms",
+				mixinConfigCount, warningCount, mixinConfigStopwatch.elapsed(TimeUnit.MILLISECONDS));
+		LOGGER.log(Level.INFO, "ASM discovery completed in {} ms", discoveryStopwatch.elapsed(TimeUnit.MILLISECONDS));
 	}
 	
 	public static int getWarningCount() {

@@ -63,6 +63,7 @@ public class FermiumPlugin implements IFMLLoadingPlugin {
 		//Clear larger cached jar scanner fields cause why not
 		FermiumJarScanner.clearCaches();
 		
+		int submittedMixinConfigCount = 0;
 		for(Map.Entry<String, List<Supplier<Boolean>>> entry : FermiumRegistryAPI.getEarlyMixins().entrySet()) {
 			//Check for removals
 			if(FermiumRegistryAPI.getRejectMixins().contains(entry.getKey())) {
@@ -82,8 +83,10 @@ public class FermiumPlugin implements IFMLLoadingPlugin {
 			if(enabled) {
 				LOGGER.log(Level.INFO, "FermiumBooter adding \"{}\" for early mixin application.", entry.getKey());
 				Mixins.addConfiguration(entry.getKey());
+				submittedMixinConfigCount++;
 			}
 		}
+		LOGGER.log(Level.INFO, "FermiumBooter submitted {} early mixin JSON configurations.", submittedMixinConfigCount);
 	}
 	
 	@Override
