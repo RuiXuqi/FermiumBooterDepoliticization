@@ -1,0 +1,36 @@
+// You may write any gradle buildscript component in this file
+// This file is automatically applied after build.gradle + dependencies.gradle is ran
+
+// If you wish to use the default helper methods, uncomment the line below
+// apply from: 'gradle/scripts/helpers.gradle'
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'        : propertyString('mod_name'),
+            'Specification-Vendor'       : '["' + propertyString('mod_authors') + '"]',
+            'Specification-Version'      : '1',
+            'Implementation-Title'       : propertyString('mod_name'),
+            'Implementation-Vendor'       : '["' + propertyString('mod_authors') + '"]',
+            'Implementation-Version'     : propertyString('mod_version'),
+            'Implementation-Timestamp'   : new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+            'TweakClass'                 : 'org.spongepowered.asm.launch.MixinTweaker',
+            'Class-Path'                 : 'mixin-0.8.7.jar mixinextras-common-0.5.3.jar mixinsquared-common-0.3.3.jar classgraph-4.8.184.jar'
+        ])
+    }
+}
+
+base {
+    archivesName = 'FermiumBooter'
+}
+
+tasks.named('jar') {
+    archiveClassifier.set('dev')
+}
+
+tasks.named('shadowJar') {
+    archiveClassifier.set('')
+}
+
+tasks.named('reobfJar') {
+    archiveBaseName.set('`FermiumBooter')
+}
