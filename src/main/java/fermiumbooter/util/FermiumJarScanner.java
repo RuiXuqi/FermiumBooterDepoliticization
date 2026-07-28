@@ -26,6 +26,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +47,7 @@ public abstract class FermiumJarScanner {
 	private static final Set<String> earlyModIDs = new HashSet<>();
 	private static final Set<MixinConfigInfo> mixinToggles = new HashSet<>();
 	private static int warningCount = 0;
+	private static final DiscoveryStatistics discoveryStatistics = new DiscoveryStatistics();
 	
 	public static boolean isModPresent(String modID) {
 		if(modID == null || modID.isEmpty()) return false;
@@ -61,10 +63,12 @@ public abstract class FermiumJarScanner {
 		LOGGER.log(Level.INFO, "FermiumJarScanner finished jar searching, found {} ModIDs.", presentMods.size());
 		
 		LOGGER.log(Level.INFO, "FermiumMixinConfig beginning MixinConfig parsing.");
+		long configStarted = discoveryStatistics.start();
 		for(MixinConfigInfo mixinConfig : mixinToggles)
 			applyMixinConfig(mixinConfig);
 
 		LOGGER.log(Level.INFO, "FermiumMixinConfig finished MixinConfig parsing, parsed {} config options with {} warnings", mixinToggles.size(), warningCount);
+		discoveryStatistics.logConfig(discoveryStatistics.elapsed(configStarted), mixinToggles.size());
 	}
 
 	public static int getWarningCount() {
@@ -79,6 +83,11 @@ public abstract class FermiumJarScanner {
 	//Not the most efficient implementation possible, but only takes around 2-3 seconds or so total even in relatively large packs
 	private static void startJarSearching() {
 		long time = System.currentTimeMillis();
+		long discoveryStarted = discoveryStatistics.start();
+		int candidates = 0;
+		int entries = 0;
+		int classes = 0;
+		Set<String> annotationCandidates = new HashSet<>();
 
 		//Technically shows up as modids but isn't found through normal methods, just add manually
 		presentMods.put("minecraft", new ModInfo("minecraft", "1.12.2", "Minecraft"));
@@ -120,6 +129,9 @@ public abstract class FermiumJarScanner {
 				)
 				.scan()
 		) {
+			candidates = scanResult.getClasspathURIs().size();
+			entries = scanResult.getAllResources().size();
+			classes = scanResult.getAllClasses().size();
 			//mcmod.info search
 			//Some mods are dumb and set their mcmod.info modids incorrectly, need to also check annotation regardless
 			for(Resource resource : scanResult.getResourcesWithLeafName("mcmod.info")){
@@ -145,12 +157,16 @@ public abstract class FermiumJarScanner {
 			}
 
 			//search for @Mod
-			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(modClassName))
+			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(modClassName)) {
+				annotationCandidates.add(classInfo.getName());
 				parseMod(classInfo);
+			}
 
 			//search for @MixinConfig
-			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(MixinConfig.class.getName()))
+			for(ClassInfo classInfo : scanResult.getClassesWithAnnotation(MixinConfig.class.getName())) {
+				annotationCandidates.add(classInfo.getName());
 				mixinConfigPaths.add(classInfo.getPackageName()+".");
+			}
 		} catch(Exception e) {
 			LOGGER.error("Crashed while parsing jars!");
 			e.printStackTrace(System.err);
@@ -174,6 +190,49 @@ public abstract class FermiumJarScanner {
 
 		long elapsed = System.currentTimeMillis() - time;
 		LOGGER.debug("Searching through present mods took {} ms", elapsed);
+		discoveryStatistics.logIndex(
+				discoveryStatistics.elapsed(discoveryStarted),
+				candidates,
+				entries,
+				classes,
+				annotationCandidates.size(),
+				presentMods.size(),
+				mixinToggles.size());
+	}
+
+	private static final class DiscoveryStatistics {
+		long start() {
+			return System.nanoTime();
+		}
+
+		long elapsed(long started) {
+			return System.nanoTime() - started;
+		}
+
+		void logIndex(long elapsedNanos, int candidates, int entries, int classes, int annotationCandidates,
+				int modIds, int mixinConfigs) {
+			LOGGER.info(
+					"Discovery stats: scanner=ClassGraph; candidates={} entries={} classes={}; "
+							+ "annotation candidates={}; mod IDs={} mixin configs={}; discovery={}ms",
+					candidates,
+					entries,
+					classes,
+					annotationCandidates,
+					modIds,
+					mixinConfigs,
+					millis(elapsedNanos));
+		}
+
+		void logConfig(long elapsedNanos, int results) {
+			LOGGER.info(
+					"Discovery config stats: results={} config+compat={}ms",
+					results,
+					millis(elapsedNanos));
+		}
+
+		private static long millis(long nanos) {
+			return TimeUnit.NANOSECONDS.toMillis(nanos);
+		}
 	}
 	
 	private static void searchModInfoRecursive(JsonElement element) {
